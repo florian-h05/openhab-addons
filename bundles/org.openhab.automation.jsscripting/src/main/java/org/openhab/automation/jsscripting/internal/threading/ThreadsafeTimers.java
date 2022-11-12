@@ -43,10 +43,10 @@ public class ThreadsafeTimers {
     private AtomicLong lastId = new AtomicLong();
     private String identifier = "noIdentifier";
 
-    public ThreadsafeTimers(Object lock, JSScriptServiceUtil jsScriptServiceUtil) {
+    public ThreadsafeTimers(Object lock, ScriptExecution scriptExecution, Scheduler scheduler) {
         this.lock = lock;
-        this.scheduler = jsScriptServiceUtil.getScheduler();
-        this.scriptExecution = jsScriptServiceUtil.getScriptExecution();
+        this.scheduler = scheduler;
+        this.scriptExecution = scriptExecution;
     }
 
     /**

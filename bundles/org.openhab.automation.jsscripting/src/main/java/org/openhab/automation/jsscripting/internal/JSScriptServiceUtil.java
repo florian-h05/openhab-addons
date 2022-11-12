@@ -13,6 +13,7 @@
 package org.openhab.automation.jsscripting.internal;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.openhab.automation.jsscripting.internal.threading.ThreadsafeTimers;
 import org.openhab.core.automation.module.script.action.ScriptExecution;
 import org.openhab.core.scheduler.Scheduler;
 import org.osgi.service.component.annotations.Activate;
@@ -35,12 +36,8 @@ public class JSScriptServiceUtil {
         this.scheduler = scheduler;
         this.scriptExecution = scriptExecution;
     }
-
-    public Scheduler getScheduler() {
-        return scheduler;
-    }
-
-    public ScriptExecution getScriptExecution() {
-        return scriptExecution;
+    
+    public JSRuntimeFeatures getJSRuntimeFeatures(Object lock) {
+        return new JSRuntimeFeatures(lock, new ThreadsafeTimers(lock, scriptExecution, scheduler));
     }
 }
