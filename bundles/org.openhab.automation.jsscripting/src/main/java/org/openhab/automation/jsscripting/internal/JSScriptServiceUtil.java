@@ -36,8 +36,8 @@ public class JSScriptServiceUtil {
         this.scheduler = scheduler;
         this.scriptExecution = scriptExecution;
     }
-    
-    public JSRuntimeFeatures getJSRuntimeFeatures(Object lock) {
-        return new JSRuntimeFeatures(lock, new ThreadsafeTimers(lock, scriptExecution, scheduler));
+
+    public JSRuntimeFeatures getJSRuntimeFeatures() {
+        return new JSRuntimeFeatures(new ThreadsafeTimers(scriptExecution, scheduler));
     }
 }

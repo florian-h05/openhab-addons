@@ -70,7 +70,7 @@ public class OpenhabGraalJSScriptEngine
     private static final Path NODE_DIR = Paths.get("node_modules");
 
     // shared lock object for synchronization of multi-thread access
-    public Object lock = new Object();
+    public final Object lock;
     private final JSRuntimeFeatures jsRuntimeFeatures;
 
     // these fields start as null because they are populated on first use
@@ -87,7 +87,8 @@ public class OpenhabGraalJSScriptEngine
     public OpenhabGraalJSScriptEngine(@Nullable String injectionCode, JSScriptServiceUtil jsScriptServiceUtil) {
         super(null); // delegate depends on fields not yet initialised, so we cannot set it immediately
         this.globalScript = GLOBAL_REQUIRE + (injectionCode != null ? injectionCode : "");
-        this.jsRuntimeFeatures = jsScriptServiceUtil.getJSRuntimeFeatures(lock);
+        this.jsRuntimeFeatures = jsScriptServiceUtil.getJSRuntimeFeatures();
+        this.lock = jsRuntimeFeatures.threadsafeTimers.getLock();
 
         LOGGER.debug("Initializing GraalJS script engine...");
 

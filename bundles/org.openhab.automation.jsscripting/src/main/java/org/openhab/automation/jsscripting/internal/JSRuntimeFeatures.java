@@ -31,7 +31,7 @@ public class JSRuntimeFeatures {
     private final Map<String, Object> features = new HashMap<>();
     public final ThreadsafeTimers threadsafeTimers;
 
-    JSRuntimeFeatures(Object lock, ThreadsafeTimers threadSafeTimers) {
+    JSRuntimeFeatures(ThreadsafeTimers threadSafeTimers) {
         this.threadsafeTimers = threadSafeTimers;
         features.put("ThreadsafeTimers", threadsafeTimers);
     }
