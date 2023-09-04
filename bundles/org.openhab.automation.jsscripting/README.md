@@ -38,7 +38,6 @@ to common openHAB functionality within rules including items, things, actions, l
 
 ## Configuration
 
-
 This add-on includes by default the [openhab-js](https://github.com/openhab/openhab-js/) NPM library and exports its namespaces onto the global namespace.
 
 This allows the use of `items`, `actions`, `cache` and other objects without the need to explicitly import them using `require()`.
