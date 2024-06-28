@@ -184,8 +184,8 @@ end
 ```javascript
 rules.when().item('Apartment_FrontDoor').changed().to('OPEN').then(() => {
   actions.notificationBuilder('Front door was opened!')
-          .addUserId('me@email.com')
-          .send();
+    .addUserId('me@email.com')
+    .send();
 }).build('Front Door Notification');
 ```
 
@@ -230,9 +230,9 @@ end
 ```javascript
 rules.when().item('Apartment_Window').changed().to('OPEN').then(() => {
   actions.notificationBuilder('Apartment window was opened!')
-          .withIcon('window')
-          .withSeverity('HIGH')
-          .send();
+    .withIcon('window')
+    .withSeverity('HIGH')
+    .send();
 }).build('Open Window Notification');
 ```
 
@@ -279,12 +279,12 @@ end
 ```javascript
 rules.when().item('Apartment_MotionSensor').changed().to('ON').then(() => {
   actions.notificationBuilder('Motion detected in the apartment!')
-          .withIcon('motion')
-          .withSeverity('MEDIUM')
-          .withTitle('Motion Detected')
-          .withMediaAttachment('https://apartment.my/camera-snapshot.jpg')
-          .addActionButton('Turn on the light=command:Apartment_Light:ON')
-          .send();
+    .withIcon('motion')
+    .withSeverity('MEDIUM')
+    .withTitle('Motion Detected')
+    .withMediaAttachment('https://apartment.my/camera-snapshot.jpg')
+    .addActionButton('Turn on the light=command:Apartment_Light:ON')
+    .send();
 }).build('Motion Detected Notification');
 ```
 
