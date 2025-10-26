@@ -10,7 +10,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.automation.jsscripting.internal;
+package org.openhab.automation.jsscripting.internal.scope;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -22,6 +22,7 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
+import org.openhab.automation.jsscripting.internal.ModuleLocator;
 import org.openhab.automation.jsscripting.internal.scriptengine.helper.LifecycleTracker;
 import org.openhab.automation.jsscripting.internal.threading.ThreadsafeWrappingScriptedAutomationManagerDelegate;
 import org.openhab.core.automation.module.script.ScriptExtensionAccessor;

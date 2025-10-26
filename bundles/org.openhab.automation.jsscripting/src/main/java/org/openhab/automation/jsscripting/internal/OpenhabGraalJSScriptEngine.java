@@ -30,16 +30,15 @@ import java.nio.file.attribute.FileAttribute;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
@@ -56,6 +55,7 @@ import org.openhab.automation.jsscripting.internal.fs.DelegatingFileSystem;
 import org.openhab.automation.jsscripting.internal.fs.PrefixedSeekableByteChannel;
 import org.openhab.automation.jsscripting.internal.fs.ReadOnlySeekableByteArrayChannel;
 import org.openhab.automation.jsscripting.internal.fs.watch.JSDependencyTracker;
+import org.openhab.automation.jsscripting.internal.scope.ScriptExtensionModuleProvider;
 import org.openhab.automation.jsscripting.internal.scriptengine.InvocationInterceptingScriptEngineWithInvocableAndCompilableAndAutoCloseable;
 import org.openhab.automation.jsscripting.internal.scriptengine.helper.LifecycleTracker;
 import org.openhab.core.automation.module.script.ScriptExtensionAccessor;
@@ -108,8 +108,6 @@ public class OpenhabGraalJSScriptEngine
     }
     private static final String OPENHAB_JS_INJECTION_CODE = "Object.assign(this, require('openhab'));";
     private static final String EVENT_CONVERSION_CODE = "this.event = (typeof this.rules?._getTriggeredData === 'function') ? rules._getTriggeredData(ctx, true) : this.event";
-    private static final Pattern USE_WRAPPER_DIRECTIVE = Pattern
-            .compile("^\\s*([\"'])use wrapper(?:=(?<enabled>true|false))?\\1;?\\s*$");
 
     private static final String REQUIRE_WRAPPER_NAME = "__wraprequire__";
     /** Shared Polyglot {@link Engine} across all instances of {@link OpenhabGraalJSScriptEngine} */
@@ -153,6 +151,7 @@ public class OpenhabGraalJSScriptEngine
     private final GraalJSScriptEngineConfiguration configuration;
 
     // these fields start as null because they are populated on first use
+    private @Nullable GraalJSScriptEngineDirectives directives;
     private @Nullable Consumer<String> scriptDependencyListener;
     private String engineIdentifier = "<uninitialized>";
 
@@ -169,7 +168,7 @@ public class OpenhabGraalJSScriptEngine
         this.configuration = configuration;
         this.jsRuntimeFeatures = jsScriptServiceUtil.getJSRuntimeFeatures(lock);
 
-        delegate = GraalJSScriptEngine.create(ENGINE, Context.newBuilder(LANGUAGE_ID) //
+        Context.Builder contextBuilder = Context.newBuilder(LANGUAGE_ID) //
                 .allowIO(IOAccess.newBuilder() //
                         .fileSystem(new DelegatingFileSystem(FileSystems.getDefault().provider()) {
                             @Override
@@ -252,7 +251,26 @@ public class OpenhabGraalJSScriptEngine
                 // if Nashorn compat mode is enabled, it will enforce ES5 compatibility, we want ECMA2024
                 .option("js.ecmascript-version", "2024") //
                 // enable CommonJS module support
-                .option("js.commonjs-require", "true"));
+                .option("js.commonjs-require", "true");
+
+        String path = UUID.randomUUID().toString();
+        int port = 1234;
+        contextBuilder.option("inspect", String.valueOf(port));
+        contextBuilder.option("inspect.Path", path);
+        contextBuilder.option("inspect.Secure", "false");
+
+        String hostAdress = "localhost";
+        String url = String.format("chrome-devtools://devtools/bundled/js_app.html?ws=%s:%s/%s", hostAdress, port,
+                path);
+        logger.info("Starting GraalJS debugger at {} for engine '{}'", url, engineIdentifier);
+
+        delegate = GraalJSScriptEngine.create(ENGINE, contextBuilder);
+    }
+
+    @Override
+    protected void processDirectives(String script) {
+        directives = new GraalJSScriptEngineDirectives(script);
+        super.processDirectives(script);
     }
 
     @Override
@@ -318,6 +336,10 @@ public class OpenhabGraalJSScriptEngine
                     "Engine '{}': isScriptFile(): {}, isScriptModule(): {}, isScriptAction(): {}, isScriptCondition(): {}, isTransformation(): {}",
                     engineIdentifier, isScriptFile(), isScriptModule(), isScriptAction(), isScriptCondition(),
                     isTransformation());
+            GraalJSScriptEngineDirectives directives = this.directives;
+            if (directives != null) {
+                logger.debug("Engine '{}': {}", engineIdentifier, directives);
+            }
         }
 
         if (!isScriptFile() && !isScriptModule() && !isTransformation()) {
@@ -360,26 +382,13 @@ public class OpenhabGraalJSScriptEngine
             newScript = EVENT_CONVERSION_CODE + System.lineSeparator() + newScript;
         }
 
-        // keep this extendable for more directives by checking the first n lines (n = number of directives)
-        // up to two directives: "use strict" (handled by Graal) and "use wrapper"
-        List<String> header = script.lines().limit(2).toList();
         boolean useWrapper = isScriptAction()
                 || (isScriptCondition() && configuration.isScriptConditionWrapperEnabled());
-        for (String line : header) {
-            var matcher = USE_WRAPPER_DIRECTIVE.matcher(line);
-            if (!matcher.matches()) {
-                continue;
-            }
-            var enabled = matcher.group("enabled");
-            if (enabled == null || enabled.isBlank()) {
-                useWrapper = true;
-            } else if ("false".equals(enabled)) {
-                useWrapper = false;
-            } else if ("true".equals(enabled)) {
-                useWrapper = true;
-            } else {
-                logger.warn("Invalid value '{}' for 'use wrapper' directive in script for engine '{}'.", enabled,
-                        engineIdentifier);
+        GraalJSScriptEngineDirectives directives = this.directives;
+        if (directives != null) {
+            Boolean useWrapperDirective = directives.useWrapper();
+            if (useWrapperDirective != null) {
+                useWrapper = useWrapperDirective;
             }
         }
 

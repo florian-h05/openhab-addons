@@ -38,6 +38,14 @@ public abstract class InvocationInterceptingScriptEngineWithInvocableAndCompilab
     }
 
     /**
+     * Hook method to be called before {@link #beforeInvocation()}.
+     * It is used to process the script and scan for directives.
+     * Some directives have to be handled before engine creation because they specify engine options.
+     */
+    protected void processDirectives(String script) {
+    }
+
+    /**
      * Hook method to be called before the invocation of any method on the script engine.
      */
     protected void beforeInvocation() {
@@ -75,6 +83,7 @@ public abstract class InvocationInterceptingScriptEngineWithInvocableAndCompilab
 
     @Override
     public Object eval(String script, ScriptContext scriptContext) throws ScriptException {
+        processDirectives(script);
         try {
             beforeInvocation();
             return afterInvocation(super.eval(onScript(script), scriptContext));
@@ -99,6 +108,7 @@ public abstract class InvocationInterceptingScriptEngineWithInvocableAndCompilab
 
     @Override
     public Object eval(String script) throws ScriptException {
+        processDirectives(script);
         try {
             beforeInvocation();
             return afterInvocation(super.eval(onScript(script)));
@@ -123,6 +133,7 @@ public abstract class InvocationInterceptingScriptEngineWithInvocableAndCompilab
 
     @Override
     public Object eval(String script, Bindings bindings) throws ScriptException {
+        processDirectives(script);
         try {
             beforeInvocation();
             return afterInvocation(super.eval(onScript(script), bindings));
@@ -185,6 +196,7 @@ public abstract class InvocationInterceptingScriptEngineWithInvocableAndCompilab
 
     @Override
     public CompiledScript compile(String script) throws ScriptException {
+        processDirectives(script);
         try {
             beforeInvocation();
             return (CompiledScript) afterInvocation(super.compile(onScript(script)));
