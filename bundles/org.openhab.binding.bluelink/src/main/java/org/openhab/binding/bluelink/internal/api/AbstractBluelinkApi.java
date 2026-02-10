@@ -176,6 +176,10 @@ public abstract class AbstractBluelinkApi<V extends IVehicle> {
      */
     public abstract boolean setChargeLimitAC(IVehicle vehicle, int limit) throws BluelinkApiException;
 
+    public java.util.Map<String, String> getProperties() {
+        return java.util.Collections.emptyMap();
+    }
+
     public abstract void addStandardHeaders(Request request);
 
     protected boolean isAuthenticated() {
