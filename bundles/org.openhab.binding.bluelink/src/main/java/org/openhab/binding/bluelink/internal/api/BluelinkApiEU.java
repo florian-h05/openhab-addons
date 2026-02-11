@@ -186,13 +186,6 @@ public class BluelinkApiEU extends AbstractBluelinkApi<EuVehicle> {
         return token != null && expiry != null && Instant.now().isBefore(expiry);
     }
 
-    @Override
-    protected void ensureAuthenticated() throws BluelinkApiException {
-        if (!isAuthenticated()) {
-            login();
-        }
-    }
-
     private void registerDevice() throws BluelinkApiException {
         ensureAuthenticated();
         String url = brandConfig.apiBaseUrl + "/api/v1/spa/notifications/register";
