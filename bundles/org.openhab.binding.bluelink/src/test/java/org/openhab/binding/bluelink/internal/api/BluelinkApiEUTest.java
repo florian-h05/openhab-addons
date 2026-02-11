@@ -52,8 +52,8 @@ public class BluelinkApiEUTest {
     static void setUp() throws Exception {
         WIREMOCK_SERVER.start();
         WireMock.configureFor("localhost", WIREMOCK_SERVER.port());
-        stubFor(post(urlEqualTo("/auth/api/v2/user/oauth2/token")).willReturn(
-                aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody(TOKEN_RESPONSE)));
+        stubFor(post(urlEqualTo("/auth/api/v2/user/oauth2/token")).willReturn(aResponse().withStatus(200)
+                .withHeader("Content-Type", "application/json").withBody(TOKEN_RESPONSE_EU)));
         stubFor(post(urlEqualTo("/api/v1/spa/notifications/register")).willReturn(aResponse().withStatus(200)
                 .withHeader("Content-Type", "application/json").withBody(EU_DEVICE_REGISTRATION_RESPONSE)));
         stubFor(get(urlEqualTo("/api/v1/spa/vehicles/1234/status/latest")).willReturn(aResponse().withStatus(200)

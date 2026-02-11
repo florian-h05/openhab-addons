@@ -30,25 +30,8 @@ public final class MockApiData {
     public static final String VEHICLE_STATUS_RESPONSE_US;
 
     // From EU
-    public static final String TOKEN_RESPONSE = """
-            {
-                "token_type": "Bearer",
-                "access_token": "test-access-token",
-                "refresh_token": "test-refresh-token",
-                "expires_in": "3600",
-                "username": "test@example.com"
-            }
-            """;
-    public static final String EU_DEVICE_REGISTRATION_RESPONSE = """
-            {
-              "retCode" : "S",
-              "resCode" : "0000",
-              "resMsg" : {
-                "deviceId" : "122c2e30-d642-4d34-ba07-7ce7d787349a"
-              },
-              "msgId" : "5b101b3b-2b30-4f55-8920-5b7e3763beed"
-            }
-            """;
+    public static final String TOKEN_RESPONSE_EU;
+    public static final String EU_DEVICE_REGISTRATION_RESPONSE;
     public static final String EU_VEHICLES_RESPONSE;
     public static final String EU_VEHICLE_STATUS_RESPONSE;
 
@@ -60,10 +43,12 @@ public final class MockApiData {
         try {
             TOKEN_RESPONSE_CA = loadResource("/login-response-ca.json");
             TOKEN_RESPONSE_US = loadResource("/login-response-us.json");
-            ENROLLMENT_RESPONSE = loadResource("/enrollment-details.json");
-            VEHICLE_STATUS_RESPONSE_US = loadResource("/vehicle-status-us.json");
+            ENROLLMENT_RESPONSE = loadResource("/us/enrollment-details.json");
+            VEHICLE_STATUS_RESPONSE_US = loadResource("/us/vehicle-status.json");
             VEHICLE_STATUS_RESPONSE_CA = loadResource("/vehicle-status-ca.json");
 
+            TOKEN_RESPONSE_EU = loadResource("/eu/login-response.json");
+            EU_DEVICE_REGISTRATION_RESPONSE = loadResource("/eu/device-registration-response.json");
             EU_VEHICLES_RESPONSE = loadResource("/eu/vehicles.json");
             EU_VEHICLE_STATUS_RESPONSE = loadResource("/eu/vehicle-status.json");
         } catch (final IOException e) {
