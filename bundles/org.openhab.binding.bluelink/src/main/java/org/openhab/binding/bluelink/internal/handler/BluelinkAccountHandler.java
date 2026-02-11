@@ -27,6 +27,7 @@ import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jetty.client.HttpClient;
 import org.openhab.binding.bluelink.internal.api.AbstractBluelinkApi;
 import org.openhab.binding.bluelink.internal.api.BluelinkApiCA;
+import org.openhab.binding.bluelink.internal.api.BluelinkApiEU;
 import org.openhab.binding.bluelink.internal.api.BluelinkApiException;
 import org.openhab.binding.bluelink.internal.api.BluelinkApiUS;
 import org.openhab.binding.bluelink.internal.api.Region;
@@ -132,6 +133,7 @@ public class BluelinkAccountHandler extends BaseBridgeHandler {
             case US -> new BluelinkApiUS(httpClient, optBaseUrl, timeZoneProvider, username, password, config.pin);
             case CA ->
                 new BluelinkApiCA(httpClient, brand, optBaseUrl, timeZoneProvider, username, password, config.pin);
+            case EU -> new BluelinkApiEU(httpClient, getThing().getProperties(), brand, password);
         };
         logger.debug("Created API for region {} brand {}", region, brand);
         updateStatus(ThingStatus.UNKNOWN);
@@ -147,6 +149,10 @@ public class BluelinkAccountHandler extends BaseBridgeHandler {
         try {
             if (bluelinkApi.login()) {
                 logger.debug("Bluelink login successful");
+                var props = bluelinkApi.getProperties();
+                if (!props.isEmpty()) {
+                    props.forEach(this::updateProperty);
+                }
                 updateStatus(ThingStatus.ONLINE);
             } else {
                 updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,

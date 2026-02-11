@@ -31,6 +31,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.openhab.binding.bluelink.internal.dto.CommonVehicleStatus;
 import org.openhab.binding.bluelink.internal.dto.eu.EuVehicle;
+import org.openhab.binding.bluelink.internal.model.Brand;
 import org.openhab.core.library.types.PointType;
 import org.openhab.core.library.types.QuantityType;
 
@@ -72,8 +73,7 @@ public class BluelinkApiEUTest {
     void testGetVehicleStatus() throws Exception {
         final String baseUrl = "http://localhost:" + WIREMOCK_SERVER.port();
 
-        final BluelinkApiEU api = new BluelinkApiEU(HTTP_CLIENT, BluelinkApiEU.Brand.HYUNDAI, baseUrl,
-                TEST_REFRESH_TOKEN);
+        final BluelinkApiEU api = new BluelinkApiEU(HTTP_CLIENT, Brand.HYUNDAI, baseUrl, TEST_REFRESH_TOKEN);
         assertTrue(api.login());
 
         final EuVehicle vehicle = new EuVehicle("1234", "IONIQ 5", "IONIQ 5", "VIN1234", "EV", true, null, null, false);

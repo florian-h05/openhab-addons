@@ -40,7 +40,6 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
-import org.eclipse.jetty.http.HttpStatus;
 import org.openhab.binding.bluelink.internal.dto.BatteryStatus;
 import org.openhab.binding.bluelink.internal.dto.CommonVehicleStatus;
 import org.openhab.binding.bluelink.internal.dto.DoorStatus;
@@ -91,12 +90,6 @@ public class BluelinkApiEU extends AbstractBluelinkApi<EuVehicle> {
     private @Nullable Instant tokenExpiry;
     private @Nullable UUID deviceId;
 
-    public enum Brand {
-        HYUNDAI,
-        KIA,
-        GENESIS
-    }
-
     public BluelinkApiEU(final HttpClient httpClient, final Map<String, String> properties, final Brand brand,
             final String refreshToken) {
         // AbstractBluelinkApi requires username/password. We pass empty username and refreshToken as password.
@@ -146,37 +139,19 @@ public class BluelinkApiEU extends AbstractBluelinkApi<EuVehicle> {
         String formBody = "grant_type=refresh_token" + "&refresh_token=" + this.refreshToken + "&client_id="
                 + brandConfig.ccspServiceId + "&client_secret=" + brandConfig.clientSecret;
 
-        Request request = httpClient.newRequest(url).method(HttpMethod.POST)
+        final Request request = httpClient.newRequest(url).method(HttpMethod.POST)
                 .header(HttpHeader.CONTENT_TYPE, "application/x-www-form-urlencoded").agent(HTTP_USER_AGENT)
                 .content(new StringContentProvider(formBody));
 
-        try {
-            ContentResponse response = request.send();
-
-            if (response.getStatus() != HttpStatus.OK_200) {
-                logger.debug("Login failed with status {}: {}", response.getStatus(), response.getContentAsString());
-                if (response.getStatus() == HttpStatus.BAD_REQUEST_400) {
-                    throw new BluelinkApiException("Login failed: Invalid refresh token");
-                }
-                throw new BluelinkApiException("Login failed with status " + response.getStatus());
-            }
-
-            TokenResponse tokenResponse = gson.fromJson(response.getContentAsString(), TokenResponse.class);
-            if (tokenResponse == null || tokenResponse.accessToken() == null) {
-                throw new BluelinkApiException("Login failed: Invalid response");
-            }
-
-            this.token = tokenResponse;
-            String expires = tokenResponse.expiresIn();
-            this.tokenExpiry = Instant.now().plusSeconds(Long.parseLong(expires != null ? expires : "3600") - 60);
-            logger.debug("Login successful, token valid until {}", tokenExpiry);
-
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new BluelinkApiException("Login interrupted", e);
-        } catch (TimeoutException | ExecutionException e) {
-            throw new BluelinkApiException("Login failed", e);
+        final TokenResponse tokenResponse = sendRequest(request, TokenResponse.class, "login");
+        if (tokenResponse.accessToken() == null) {
+            throw new BluelinkApiException("Login failed: Invalid response");
         }
+
+        this.token = tokenResponse;
+        String expires = tokenResponse.expiresIn();
+        this.tokenExpiry = Instant.now().plusSeconds(Long.parseLong(expires != null ? expires : "3600") - 60);
+        logger.debug("Login successful, token valid until {}", tokenExpiry);
     }
 
     @Override
@@ -200,21 +175,7 @@ public class BluelinkApiEU extends AbstractBluelinkApi<EuVehicle> {
         addStandardHeaders(request);
         addAuthHeaders(request);
 
-        ContentResponse response;
-        try {
-            response = request.send();
-            if (response.getStatus() != HttpStatus.OK_200) {
-                logger.debug("Device registration failed with status {}: {}", response.getStatus(),
-                        response.getContentAsString());
-                throw new BluelinkApiException("Device registration failed with status " + response.getStatus());
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new BluelinkApiException("Device registration interrupted", e);
-        } catch (final TimeoutException | ExecutionException e) {
-            throw new BluelinkApiException("Device registration failed", e);
-        }
-
+        final ContentResponse response = checkStatus(send(request), "register device");
         Type type = new TypeToken<BaseResponse<RegistrationResponse>>() {
         }.getType();
         BaseResponse<RegistrationResponse> registration = gson.fromJson(response.getContentAsString(), type);
@@ -234,7 +195,7 @@ public class BluelinkApiEU extends AbstractBluelinkApi<EuVehicle> {
         addStandardHeaders(request);
         addAuthHeaders(request);
 
-        ContentResponse response = doRequest(request);
+        final ContentResponse response = checkStatus(send(request), "get vehicles");
 
         Type type = new TypeToken<BaseResponse<VehiclesResponse>>() {
         }.getType();
@@ -269,7 +230,7 @@ public class BluelinkApiEU extends AbstractBluelinkApi<EuVehicle> {
         addStandardHeaders(request);
         addAuthHeaders(request);
 
-        ContentResponse response = doRequest(request);
+        final ContentResponse response = checkStatus(send(request), "get vehicle status");
 
         logger.debug("Vehicle status request successful for vehicle {}: {}", euVehicle.getDisplayName(),
                 response.getContentAsString());
@@ -323,7 +284,7 @@ public class BluelinkApiEU extends AbstractBluelinkApi<EuVehicle> {
         }
         // odometer is in VehicleStatusInfo directly
         if (statusEU.info().odometer() != null) {
-            cb.acceptOdometer(new QuantityType<>(statusEU.info().odometer().value(), SIUnits.METRE.multiply(1000)));
+            cb.acceptOdometer(new QuantityType<>(statusEU.info().odometer().value() * 1000, SIUnits.METRE));
         }
 
         return true;
@@ -390,28 +351,31 @@ public class BluelinkApiEU extends AbstractBluelinkApi<EuVehicle> {
         }
     }
 
-    private ContentResponse doRequest(final Request request) throws BluelinkApiException {
+    private ContentResponse send(final Request request) throws BluelinkApiException {
         try {
-            final ContentResponse response = request.send();
-            if (response.getStatus() >= 200 && response.getStatus() < 300) {
-                return response;
-            } else {
-                final String msg = "API request failed with status " + response.getStatus();
-                if (response.getStatus() == 400) {
-                    BaseResponse<?> response1 = gson.fromJson(response.getContentAsString(), BaseResponse.class);
-                    if (response1 != null && "4004".equals(response1.responseCode())) {
-                        throw new RetryableRequestException(msg);
-                    }
-                }
-                logger.debug("API request failed with status {}: {}", response.getStatus(),
-                        response.getContentAsString());
-                throw new BluelinkApiException(msg);
-            }
+            return request.send();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new BluelinkApiException("API request interrupted", e);
         } catch (final TimeoutException | ExecutionException e) {
             throw new BluelinkApiException("API request failed", e);
+        }
+    }
+
+    @Override
+    protected ContentResponse checkStatus(final ContentResponse response, final String op) throws BluelinkApiException {
+        if (response.getStatus() >= 200 && response.getStatus() < 300) {
+            return response;
+        } else {
+            final String msg = "API request failed with status " + response.getStatus();
+            if (response.getStatus() == 400) {
+                BaseResponse<?> response1 = gson.fromJson(response.getContentAsString(), BaseResponse.class);
+                if (response1 != null && "4004".equals(response1.responseCode())) {
+                    throw new RetryableRequestException(msg);
+                }
+            }
+            logger.debug("API request failed with status {}: {}", response.getStatus(), response.getContentAsString());
+            throw new BluelinkApiException(msg);
         }
     }
 
@@ -464,6 +428,7 @@ public class BluelinkApiEU extends AbstractBluelinkApi<EuVehicle> {
                     new BrandConfig("https://prd-eu-ccapi.genesis.com:8080", "https://idpconnect-eu.genesis.com",
                             "3020afa2-30ff-412a-aa51-d28fbe901e10", "f11f2b86-e0e7-4851-90df-5600b01d8b70", "secret",
                             "RFtoRq/vDXJmRndoZaZQyYo3/qFLtVReW8P7utRPcc0ZxOzOELm9mexvviBk/qqIp4A=", "GCM");
+                default -> throw new IllegalArgumentException("Unsupported brand: " + brand);
             };
         }
     }
@@ -605,15 +570,14 @@ public class BluelinkApiEU extends AbstractBluelinkApi<EuVehicle> {
             return new EvStatus(e.isCharging(), e.batteryPercentage(), e.plugStatus(), reserve, distance, time);
         }
 
-        private DrivingRange mapRange(VehicleStatusEU.RangeValue rv) {
-            if (rv == null)
-                return null;
-            return new DrivingRange((int) rv.value(), rv.unit());
+        private @NonNull DrivingRange mapRange(@Nullable DrivingRange rv) {
+            return rv != null ? rv : new DrivingRange(0, 0);
         }
 
-        private EvStatus.ChargeRemainingTime.TimeValue mapTime(VehicleStatusEU.ValueUnit vu) {
-            if (vu == null)
-                return null;
+        private EvStatus.ChargeRemainingTime.TimeValue mapTime(VehicleStatusEU.@Nullable ValueUnit vu) {
+            if (vu == null) {
+                return new EvStatus.ChargeRemainingTime.TimeValue(0, 0);
+            }
             return new EvStatus.ChargeRemainingTime.TimeValue((int) vu.value(), vu.unit());
         }
 

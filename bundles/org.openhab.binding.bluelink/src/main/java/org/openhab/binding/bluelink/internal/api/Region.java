@@ -22,5 +22,6 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 @NonNullByDefault
 public enum Region {
     US,
-    CA
+    CA,
+    EU
 }

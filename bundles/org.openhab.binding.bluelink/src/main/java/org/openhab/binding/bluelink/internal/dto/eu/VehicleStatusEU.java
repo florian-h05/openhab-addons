@@ -17,6 +17,10 @@ import static org.openhab.core.library.unit.SIUnits.CELSIUS;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.openhab.binding.bluelink.internal.dto.BatteryStatus;
+import org.openhab.binding.bluelink.internal.dto.DoorStatus;
+import org.openhab.binding.bluelink.internal.dto.DrivingRange;
+import org.openhab.binding.bluelink.internal.dto.SeatHeaterState;
 import org.openhab.binding.bluelink.internal.dto.TirePressureWarnings;
 import org.openhab.core.library.types.QuantityType;
 import org.openhab.core.types.State;
@@ -32,16 +36,16 @@ import com.google.gson.annotations.SerializedName;
 public record VehicleStatusEU(@SerializedName("vehicleStatusInfo") VehicleStatusInfo info) {
     public record VehicleStatusInfo(@SerializedName("vehicleLocation") VehicleLocation location,
             @SerializedName("vehicleStatus") VehicleStatusData status,
-            @SerializedName("odometer") RangeValue odometer) {
+            @SerializedName("odometer") DrivingRange odometer) {
     }
 
     public record VehicleStatusData(@SerializedName("time") String dateTime,
             @SerializedName("airControlOn") boolean airCtrlOn, @SerializedName("engine") boolean engine,
             @SerializedName("doorLock") boolean doorLock, @SerializedName("doorOpen") DoorStatus doorOpen,
-            @SerializedName("windowOpen") WindowStatus windowOpen, @SerializedName("trunkOpen") boolean trunkOpen,
+            @SerializedName("windowOpen") DoorStatus windowOpen, @SerializedName("trunkOpen") boolean trunkOpen,
             @SerializedName("hoodOpen") boolean hoodOpen, @SerializedName("airTemp") AirTemperature airTemp,
             @SerializedName("defrost") boolean defrost, @SerializedName("evStatus") EvStatus evStatus,
-            @SerializedName("dte") RangeValue dte, @SerializedName("steerWheelHeat") int steerWheelHeat,
+            @SerializedName("dte") DrivingRange dte, @SerializedName("steerWheelHeat") int steerWheelHeat,
             @SerializedName("sideBackWindowHeat") int sideBackWindowHeat,
             @SerializedName("seatHeaterVentState") SeatHeaterState seatHeaterVentState,
             @SerializedName("tirePressureLamp") TirePressureWarning tirePressure,
@@ -98,7 +102,7 @@ public record VehicleStatusEU(@SerializedName("vehicleStatusInfo") VehicleStatus
     public record EvStatus(@SerializedName("batteryCharge") boolean isCharging,
             @SerializedName("batteryStatus") int batteryPercentage, @SerializedName("batteryPlugin") int plugStatus,
             @SerializedName("remainTime2") ChargeRemainingTime remainTime,
-            @SerializedName("drvDistance") List<DrivingRange> drivingDistance,
+            @SerializedName("drvDistance") List<DrivingDistance> drivingDistance,
             @SerializedName("reservChargeInfos") ReserveChargeInfos reserveChargeInfos) {
     }
 
@@ -118,29 +122,13 @@ public record VehicleStatusEU(@SerializedName("vehicleStatusInfo") VehicleStatus
     public record ValueUnit(double value, int unit) {
     }
 
-    // Records copied from US/Common DTOs or defined to match JSON
-    public record DoorStatus(int frontLeft, int frontRight, int backLeft, int backRight) {
-    }
-
-    public record WindowStatus(int frontLeft, int frontRight, int backLeft, int backRight) {
-    }
-
-    public record RangeValue(double value, int unit) {
-    }
-
-    public record SeatHeaterState(int frontLeft, int frontRight, int rearLeft, int rearRight) {
-    }
-
-    public record BatteryStatus(@SerializedName("batSoc") int stateOfCharge) {
-    }
-
     public record ChargeRemainingTime(@SerializedName("atc") ValueUnit current, @SerializedName("etc1") ValueUnit fast,
             @SerializedName("etc2") ValueUnit portable, @SerializedName("etc3") ValueUnit station) {
     }
 
-    public record DrivingRange(@SerializedName("rangeByFuel") RangeByFuel rangeByFuel) {
+    public record DrivingDistance(@SerializedName("rangeByFuel") RangeByFuel rangeByFuel) {
     }
 
-    public record RangeByFuel(RangeValue totalAvailableRange, RangeValue evModeRange, RangeValue gasModeRange) {
+    public record RangeByFuel(DrivingRange totalAvailableRange, DrivingRange evModeRange, DrivingRange gasModeRange) {
     }
 }
