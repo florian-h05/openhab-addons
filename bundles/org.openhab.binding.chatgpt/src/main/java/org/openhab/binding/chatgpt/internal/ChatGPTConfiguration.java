@@ -28,7 +28,6 @@ public class ChatGPTConfiguration {
     public String baseUrl = DEFAULT_BASE_URL;
     // Kept for backward compatibility
     public @Nullable String apiUrl;
-    public @Nullable String modelUrl;
     public String apiKey = "";
     // Connection
     public Integer requestTimeout = DEFAULT_REQUEST_TIMEOUT;
