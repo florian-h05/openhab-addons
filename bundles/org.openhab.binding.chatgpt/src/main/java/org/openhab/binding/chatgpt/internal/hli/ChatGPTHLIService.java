@@ -193,7 +193,7 @@ public class ChatGPTHLIService implements ThingHandlerService, HumanLanguageInte
         int maxLoops = config.maxModelTurns;
         while (true) {
             if (loopCount >= maxLoops) {
-                logger.warn("Cannot interpret: Model execution turn limit exceeded (max {} turns)", maxLoops);
+                logger.warn("Cannot interpret: Model turn limit exceeded (max {} turns)", maxLoops);
                 throw new InterpretationException(
                         getLocalizedMessage(ERROR_KEY_TECHNICAL_PROBLEM, DEFAULT_ERROR_TECHNICAL_PROBLEM, locale));
             }

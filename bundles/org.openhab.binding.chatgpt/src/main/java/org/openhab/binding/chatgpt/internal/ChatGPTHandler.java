@@ -226,6 +226,9 @@ public class ChatGPTHandler extends BaseThingHandler {
         });
     }
 
+    /**
+     * Resolves the base URL for the API requests, providing backward compatibility for legacy configuration fields.
+     */
     private String resolveBaseUrl(ChatGPTConfiguration c) {
         String baseUrl = c.baseUrl;
         String legacyApiUrl = c.apiUrl;

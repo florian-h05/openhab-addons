@@ -26,6 +26,7 @@ import org.eclipse.jdt.annotation.Nullable;
 public class ChatGPTConfiguration {
     // API
     public String baseUrl = DEFAULT_BASE_URL;
+    // Kept for backward compatibility
     public @Nullable String apiUrl;
     public @Nullable String modelUrl;
     public String apiKey = "";
