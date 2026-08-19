@@ -323,10 +323,8 @@ public class ChatGPTApiClient {
             request.header(HttpHeader.AUTHORIZATION, "Bearer " + apiKey);
         }
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("Request to {} (POST): payload size = {} bytes", baseUrl + PATH_CHAT_COMPLETIONS,
-                    queryJson.getBytes(StandardCharsets.UTF_8).length);
-        }
+        logger.debug("Request to {} (POST): payload size = {} bytes", baseUrl + PATH_CHAT_COMPLETIONS,
+                queryJson.getBytes(StandardCharsets.UTF_8).length);
         if (logger.isTraceEnabled()) {
             try {
                 String prettyRequest = objectMapper.writerWithDefaultPrettyPrinter()
@@ -340,6 +338,17 @@ public class ChatGPTApiClient {
             ContentResponse response = request.send();
             if (response.getStatus() == HttpStatus.OK_200) {
                 String body = response.getContentAsString();
+                ChatResponse chatResponse = objectMapper.readValue(body, ChatResponse.class);
+                ChatResponse.Usage usage = chatResponse.getUsage();
+                if (usage != null) {
+                    logger.debug(
+                            "Response from {} (POST): payload size = {} bytes, prompt tokens = {}, completion tokens = {}, total tokens = {}",
+                            baseUrl + PATH_CHAT_COMPLETIONS, body.getBytes(StandardCharsets.UTF_8).length,
+                            usage.getPromptTokens(), usage.getCompletionTokens(), usage.getTotalTokens());
+                } else {
+                    logger.debug("Response from {} (POST): payload size = {} bytes", baseUrl + PATH_CHAT_COMPLETIONS,
+                            body.getBytes(StandardCharsets.UTF_8).length);
+                }
                 if (logger.isTraceEnabled()) {
                     try {
                         String prettyResponse = objectMapper.writerWithDefaultPrettyPrinter()
@@ -350,22 +359,12 @@ public class ChatGPTApiClient {
                         logger.trace("Response payload from {} (POST):\n{}", baseUrl + PATH_CHAT_COMPLETIONS, body);
                     }
                 }
-                ChatResponse chatResponse = objectMapper.readValue(body, ChatResponse.class);
-                if (logger.isDebugEnabled()) {
-                    ChatResponse.Usage usage = chatResponse.getUsage();
-                    if (usage != null) {
-                        logger.debug(
-                                "Response from {} (POST): payload size = {} bytes, prompt tokens = {}, completion tokens = {}, total tokens = {}",
-                                baseUrl + PATH_CHAT_COMPLETIONS, body.getBytes(StandardCharsets.UTF_8).length,
-                                usage.getPromptTokens(), usage.getCompletionTokens(), usage.getTotalTokens());
-                    } else {
-                        logger.debug("Response from {} (POST): payload size = {} bytes",
-                                baseUrl + PATH_CHAT_COMPLETIONS, body.getBytes(StandardCharsets.UTF_8).length);
-                    }
-                }
                 return chatResponse;
             } else {
                 String errorBody = response.getContentAsString();
+                logger.debug("Error response from {} (POST): HTTP {} {}, payload size = {} bytes",
+                        baseUrl + PATH_CHAT_COMPLETIONS, response.getStatus(), response.getReason(),
+                        errorBody.getBytes(StandardCharsets.UTF_8).length);
                 if (logger.isTraceEnabled()) {
                     try {
                         String prettyError = objectMapper.writerWithDefaultPrettyPrinter()
@@ -376,11 +375,6 @@ public class ChatGPTApiClient {
                         logger.trace("Error response payload from {} (POST):\n{}", baseUrl + PATH_CHAT_COMPLETIONS,
                                 errorBody);
                     }
-                }
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Error response from {} (POST): HTTP {} {}, payload size = {} bytes",
-                            baseUrl + PATH_CHAT_COMPLETIONS, response.getStatus(), response.getReason(),
-                            errorBody.getBytes(StandardCharsets.UTF_8).length);
                 }
                 throw new ChatGPTApiException(
                         "ChatGPT API request failed with HTTP " + response.getStatus() + " " + response.getReason());
@@ -406,19 +400,15 @@ public class ChatGPTApiClient {
         if (!apiKey.isBlank()) {
             request.header(HttpHeader.AUTHORIZATION, "Bearer " + apiKey);
         }
-        if (logger.isDebugEnabled()) {
-            logger.debug("Request to {} (GET)", baseUrl + PATH_MODELS);
-        }
+        logger.debug("Request to {} (GET)", baseUrl + PATH_MODELS);
         try {
             ContentResponse response = request.send();
             if (response.getStatus() == HttpStatus.OK_200) {
                 String body = response.getContentAsString();
+                logger.debug("Response from {} (GET): payload size = {} bytes", baseUrl + PATH_MODELS,
+                        body.getBytes(StandardCharsets.UTF_8).length);
                 if (logger.isTraceEnabled()) {
                     logger.trace("Response payload from {} (GET):\n{}", baseUrl + PATH_MODELS, body);
-                }
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Response from {} (GET): payload size = {} bytes", baseUrl + PATH_MODELS,
-                            body.getBytes(StandardCharsets.UTF_8).length);
                 }
                 JsonNode modelsNode = objectMapper.readTree(body);
                 JsonNode data = modelsNode.get("data");
