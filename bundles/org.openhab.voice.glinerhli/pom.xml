@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.openhab.addons.bundles</groupId>
+    <artifactId>org.openhab.addons.reactor.bundles</artifactId>
+    <version>5.3.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>org.openhab.voice.glinerhli</artifactId>
+
+  <name>openHAB Add-ons :: Bundles :: Voice :: GLiNER Semantic Human Language Interpreter</name>
+
+  <properties>
+    <!-- sync with piper-jni -->
+    <onnxruntime.version>1.22.0</onnxruntime.version>
+    <djl.version>0.31.0</djl.version>
+    <!-- Keep all embedded third-party ML/tokenizer packages private to this bundle -->
+    <bnd.exportpackage>!ai.onnxruntime.*,!ai.djl.*</bnd.exportpackage>
+    <bnd.importpackage>android.*;resolution:=optional,com.google.errorprone.annotations.*;resolution:=optional,javax.annotation.*;resolution:=optional,io.opentelemetry.*;resolution:=optional,org.apache.commons.codec.*;resolution:=optional,org.apache.commons.compress.*;resolution:=optional,org.apache.commons.io.*;resolution:=optional,org.jspecify.annotations.*;resolution:=optional,*</bnd.importpackage>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.microsoft.onnxruntime</groupId>
+      <artifactId>onnxruntime</artifactId>
+      <version>${onnxruntime.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>ai.djl.huggingface</groupId>
+      <artifactId>tokenizers</artifactId>
+      <version>${djl.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>ai.djl</groupId>
+      <artifactId>api</artifactId>
+      <version>${djl.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>embed-dependencies</id>
+            <configuration>
+              <excludes>**/module-info.class,META-INF/MANIFEST.MF,META-INF/*.SF,META-INF/*.DSA,META-INF/*.RSA,META-INF/versions/**</excludes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

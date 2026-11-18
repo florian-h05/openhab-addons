@@ -543,6 +543,7 @@
     <module>org.openhab.persistence.rrd4j</module>
     <module>org.openhab.persistence.timescaledb</module>
     <!-- voice -->
+    <module>org.openhab.voice.glinerhli</module>
     <module>org.openhab.voice.googlestt</module>
     <module>org.openhab.voice.googletts</module>
     <module>org.openhab.voice.mactts</module>

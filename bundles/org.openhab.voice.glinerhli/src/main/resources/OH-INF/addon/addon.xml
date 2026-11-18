@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addon:addon id="glinerhli" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:addon="https://openhab.org/schemas/addon/v1.0.0"
+	xsi:schemaLocation="https://openhab.org/schemas/addon/v1.0.0 https://openhab.org/schemas/addon-1.0.0.xsd">
+
+	<type>voice</type>
+	<name>GLiNER Semantic Human Language Interpreter</name>
+	<description>Offline, zero-shot Human Language Interpreter powered by GLiNER 2 and configurable ONNX text embeddings
+		(e.g. Granite Embedding Multilingual or EmbeddingGemma 2).</description>
+	<connection>none</connection>
+
+	<service-id>org.openhab.voice.glinerhli</service-id>
+
+	<config-description-ref uri="voice:glinerhli"/>
+
+</addon:addon>
